@@ -105,7 +105,7 @@ div[data-baseweb="popover"] li:hover {
  
 /* Labels */
 label, .stNumberInput label, .stTextInput label, .stSelectbox label {
-    color: #ffffff !important;
+    color: #444444 !important;
     font-size: 0.8rem !important;
     font-weight: 600 !important;
 }
