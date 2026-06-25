@@ -105,7 +105,7 @@ div[data-baseweb="popover"] li:hover {
  
 /* Labels */
 label, .stNumberInput label, .stTextInput label, .stSelectbox label {
-    color: #444444 !important;
+    color: #ffffff !important;
     font-size: 0.8rem !important;
     font-weight: 600 !important;
 }
@@ -243,6 +243,7 @@ def engineer_features(row):
         "Log_Sold_Rate": np.log1p(row["Sold_Rate"]),
         "Log_Rental_Rate": np.log1p(row["Rental_Rate"]),
     }])
+
  
 def predict(row):
     X = pre_pipeline.transform(engineer_features(row))
@@ -292,7 +293,7 @@ st.markdown("""
 col_form, col_map = st.columns([1, 1.5], gap="large")
  
 # FORM
-with col_form:
+with col_form:  
     st.markdown('<div class="section-title">📍 Lokasi</div>', unsafe_allow_html=True)
     st.markdown('<p class="hint">Klik peta di kanan → Lat/Long terisi otomatis.</p>', unsafe_allow_html=True)
     c1, c2 = st.columns(2)
