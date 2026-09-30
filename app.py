@@ -147,6 +147,25 @@ div[data-testid="stButton"] > button[kind="primary"] {
     border-left: 3px solid #f5e642;
     margin-bottom: 0.4rem;
 }
+
+/* Dropdown list (popover selectbox) */
+div[data-baseweb="popover"] ul[role="listbox"] {
+    background-color: #1c1c1e !important;
+    border: 1.5px solid #3a3a3a !important;
+    border-radius: 8px !important;
+}
+div[data-baseweb="popover"] li[role="option"],
+div[data-baseweb="popover"] li[role="option"] * {
+    color: #ffffff !important;
+    background-color: transparent !important;
+}
+div[data-baseweb="popover"] li[role="option"]:hover,
+div[data-baseweb="popover"] li[role="option"][aria-selected="true"] {
+    background-color: #3a3a3a !important;
+}
+div[data-baseweb="popover"] li[role="option"][aria-selected="true"] * {
+    color: #f5e642 !important;   /* opsi terpilih warna kuning */
+}
 </style>
 """, unsafe_allow_html=True)
  
@@ -337,6 +356,9 @@ with col_form:
 
 
 # PETA
+# Basemap: CARTO Positron (pakai API key dari st.secrets).
+# Kalau secret belum diisi / tidak ketemu, otomatis fallback ke Esri Light Gray (tanpa key),
+# jadi app tidak crash.
 CARTO_API_KEY = "cb1_44ol_1_da9929c040f1b6247f4eba18"
 def get_basemap():
     try:
@@ -361,7 +383,7 @@ with col_map:
     st.markdown(
         f'<p class="hint">Marker berwarna = {prop_type} dalam radius 3 km · Klik marker untuk detail properti</p>',
         unsafe_allow_html=True)
- 
+
     m = folium.Map(
         location=[st.session_state.lat, st.session_state.lng],
         zoom_start=13,
@@ -369,7 +391,7 @@ with col_map:
         attr=ATTR,
         max_zoom=20,
     )
- 
+
     # Radius circle
     folium.Circle(
         location=[st.session_state.lat, st.session_state.lng],
@@ -377,7 +399,7 @@ with col_map:
         fill=True, fill_color="#f5e642", fill_opacity=0.06,
         tooltip="Radius 3 km",
     ).add_to(m)
- 
+
     # Marker lokasi pilihan
     folium.Marker(
         location=[st.session_state.lat, st.session_state.lng],
@@ -385,22 +407,25 @@ with col_map:
         icon=folium.Icon(color="red", icon="home", prefix="fa"),
         tooltip="📍 Lokasi pilihan",
     ).add_to(m)
- 
+
     # Properti dalam radius
     if MODEL_LOADED and not df_buildings.empty:
         df_f = df_buildings[df_buildings["Property"] == prop_type].copy()
-        df_f["dist_km"] = df_f.apply(
-            lambda r: haversine_km(st.session_state.lat, st.session_state.lng, r["Lat"], r["Long"]), axis=1)
-        df_r = df_f[df_f["dist_km"] <= 3.0]
-        mc   = MARKER_COLORS.get(prop_type, "#6366f1")
- 
+        if not df_f.empty:
+            df_f["dist_km"] = df_f.apply(
+                lambda r: haversine_km(st.session_state.lat, st.session_state.lng, r["Lat"], r["Long"]), axis=1)
+            df_r = df_f[df_f["dist_km"] <= 3.0]
+        else:
+            df_r = df_f
+        mc = MARKER_COLORS.get(prop_type, "#6366f1")
+
         for _, row in df_r.iterrows():
-            sold_s   = f"Rp {row['Sold_Rate']/1e6:.1f} jt/m²"   if row['Sold_Rate'] > 0   else "N/A"
-            rent_s   = f"Rp {row['Rental_Rate']/1e3:.0f} rb/m²"  if row['Rental_Rate'] > 0 else "N/A"
-            occ_s    = f"{row['Occ']:.1%}"  if row['Occ'] > 0  else "N/A"
-            roi_s    = f"{row['ROI']:.1%}"  if row['ROI'] > 0  else "N/A"
+            sold_s = f"Rp {row['Sold_Rate']/1e6:.1f} jt/m²"  if row['Sold_Rate'] > 0   else "N/A"
+            rent_s = f"Rp {row['Rental_Rate']/1e3:.0f} rb/m²" if row['Rental_Rate'] > 0 else "N/A"
+            occ_s  = f"{row['Occ']:.1%}" if row['Occ'] > 0 else "N/A"
+            roi_s  = f"{row['ROI']:.1%}" if row['ROI'] > 0 else "N/A"
             popup_html = f"""
-            <div style="font-family:sans-serif;min-width:210px;font-size:13px;line-height:1.7;">
+            <div style="font-family:sans-serif;min-width:210px;font-size:13px;line-height:1.7;color:#1a1a1a;">
               <b style="font-size:14px;">{row['Building_Name']}</b><br>
               <span style="color:#666;">{row['Property']} · {row['Area']}</span>
               <hr style="margin:6px 0;">
@@ -417,19 +442,21 @@ with col_map:
                 tooltip=f"🏢 {row['Building_Name']}",
                 popup=folium.Popup(popup_html, max_width=260),
             ).add_to(m)
- 
-        # Mini legend
+
+        # Mini legend (warna teks di-set eksplisit supaya tidak pudar)
         legend = f"""
         <div style="position:fixed;bottom:30px;left:30px;z-index:1000;
-                    background:white;padding:10px 14px;border-radius:10px;
-                    border:1px solid #ddd;font-family:sans-serif;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-          <b>{prop_type} dalam radius 3 km</b><br>
-          <span style="color:{mc};">●</span> {len(df_r)} properti ditemukan
+                    background:#ffffff;color:#1a1a1a;padding:10px 14px;border-radius:10px;
+                    border:1px solid #ddd;font-family:sans-serif;font-size:12px;
+                    box-shadow:0 2px 8px rgba(0,0,0,0.15);opacity:1;">
+          <b style="color:#1a1a1a;">{prop_type} dalam radius 3 km</b><br>
+          <span style="color:{mc};font-size:14px;">●</span>
+          <span style="color:#1a1a1a;">{len(df_r)} properti ditemukan</span>
         </div>"""
         m.get_root().html.add_child(folium.Element(legend))
- 
+
     map_data = st_folium(m, width="100%", height=560, returned_objects=["last_clicked"])
- 
+
     if map_data and map_data.get("last_clicked"):
         clat = map_data["last_clicked"]["lat"]
         clng = map_data["last_clicked"]["lng"]
@@ -437,15 +464,15 @@ with col_map:
             st.session_state.lat = clat
             st.session_state.lng = clng
             st.rerun()
- 
+
     st.markdown(
         f'<div class="coord-badge">📍 {st.session_state.lat:.5f}, {st.session_state.lng:.5f}</div>',
         unsafe_allow_html=True)
- 
+
     st.markdown("**Legend warna marker:**")
     lc = st.columns(4)
     for i, (pt, pc) in enumerate(MARKER_COLORS.items()):
         lc[i].markdown(f'<span style="color:{pc};font-size:1.1rem;">●</span> {pt}', unsafe_allow_html=True)
- 
+
 st.divider()
 st.caption("Model: CatBoost (tuned) · Dataset: Properti Jakarta Selatan · CV R² ROI: 0.9927 · Occ: 0.6632")
