@@ -338,7 +338,23 @@ with col_form:
 
 # PETA
 CARTO_API_KEY = "cb1_44ol_1_da9929c040f1b6247f4eba18"
-CARTO_KEY = st.secrets["CARTO_API_KEY"]
+def get_basemap():
+    try:
+        key = st.secrets["CARTO_API_KEY"]
+        if key:
+            return (
+                f"https://{{s}}.basemaps.cartocdn.com/rastertiles/light_all/{{z}}/{{x}}/{{y}}.png?key={key}",
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> '
+                '&copy; <a href="https://carto.com/attribution/">CARTO</a>',
+            )
+    except Exception:
+        pass
+    return (
+        "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+        "Tiles &copy; Esri",
+    )
+
+TILES, ATTR = get_basemap()
 
 with col_map:
     st.markdown('<div class="map-title">🗺️ Klik peta untuk menentukan lokasi</div>', unsafe_allow_html=True)
@@ -346,12 +362,13 @@ with col_map:
         f'<p class="hint">Marker berwarna = {prop_type} dalam radius 3 km · Klik marker untuk detail properti</p>',
         unsafe_allow_html=True)
  
-    m = folium.Map(location=[st.session_state.lat, st.session_state.lng],
-                   zoom_start=13,
-                   tiles=f"https://{{s}}.basemaps.cartocdn.com/rastertiles/light_all/{{z}}/{{x}}/{{y}}.png?key={CARTO_KEY}",
-                   attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attribution/">CARTO</a>',
-                   subdomains="abcd",
-                   max_zoom=20)
+    m = folium.Map(
+        location=[st.session_state.lat, st.session_state.lng],
+        zoom_start=13,
+        tiles=TILES,
+        attr=ATTR,
+        max_zoom=20,
+    )
  
     # Radius circle
     folium.Circle(
