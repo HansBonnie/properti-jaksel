@@ -69,19 +69,25 @@ div[data-testid="stNumberInput"] input::placeholder,
 div[data-testid="stTextInput"] input::placeholder {
     color: #888888 !important;
 }
-div[data-testid="stSelectbox"] > div > div {
+/* Selectbox (kotak) — Streamlit versi baru (react-aria) + versi lama (baseweb) */
+div[data-testid="stSelectbox"] div[role="group"],
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
     background-color: #1c1c1e !important;
-    color: #ffffff !important;
     border: 1.5px solid #3a3a3a !important;
     border-radius: 8px !important;
 }
-div[data-testid="stSelectbox"] svg { fill: #ffffff !important; }
-/* Teks nilai terpilih di dalam selectbox */
-div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
-div[data-testid="stSelectbox"] div[data-baseweb="select"] input {
+div[data-testid="stSelectbox"] input,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] * {
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
+    background-color: transparent !important;
     opacity: 1 !important;
+}
+div[data-testid="stSelectbox"] button,
+div[data-testid="stSelectbox"] svg {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    background-color: transparent !important;
 }
 div[data-testid="stNumberInput"] label,
 div[data-testid="stTextInput"] label,
@@ -155,21 +161,28 @@ div[data-testid="stButton"] > button[kind="primary"] {
     margin-bottom: 0.4rem;
 }
 
-/* Dropdown list (popover selectbox) */
+/* Dropdown list (popover) — Streamlit versi baru + versi lama */
+div[data-testid="stSelectboxVirtualDropdown"],
 div[data-baseweb="popover"] ul[role="listbox"] {
     background-color: #1c1c1e !important;
     border: 1.5px solid #3a3a3a !important;
     border-radius: 8px !important;
 }
+div[data-testid="stSelectboxVirtualDropdown"] [role="option"],
+div[data-testid="stSelectboxVirtualDropdown"] [role="option"] *,
 div[data-baseweb="popover"] li[role="option"],
 div[data-baseweb="popover"] li[role="option"] * {
     color: #ffffff !important;
     background-color: transparent !important;
 }
+div[data-testid="stSelectboxVirtualDropdown"] [role="option"]:hover,
+div[data-testid="stSelectboxVirtualDropdown"] [role="option"][data-focused="true"],
 div[data-baseweb="popover"] li[role="option"]:hover,
 div[data-baseweb="popover"] li[role="option"][aria-selected="true"] {
     background-color: #3a3a3a !important;
 }
+div[data-testid="stSelectboxVirtualDropdown"] [role="option"][aria-selected="true"],
+div[data-testid="stSelectboxVirtualDropdown"] [role="option"][aria-selected="true"] *,
 div[data-baseweb="popover"] li[role="option"][aria-selected="true"] * {
     color: #f5e642 !important;   /* opsi terpilih warna kuning */
 }
