@@ -5,23 +5,23 @@ import pickle
 import folium
 from streamlit_folium import st_folium
 import math
-
+ 
 st.set_page_config(
     page_title="Properti Jaksel — ROI & Occ Predictor",
     page_icon="🏢",
     layout="wide",
 )
-
+ 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap');
-
+ 
 html, body, [class*="css"], p, div, span, label {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     color: #1a1a1a;
 }
 .stApp { background-color: #f0ede8; }
-
+ 
 .app-header {
     background: #1c1c1e;
     border-radius: 16px;
@@ -52,72 +52,43 @@ html, body, [class*="css"], p, div, span, label {
 }
 .hint {
     font-size: 0.75rem;
-    color: #6b6b6b !important;
+    color: #888888 !important;
     margin: -0.3rem 0 0.8rem;
     font-style: italic;
 }
-
-/* Input dark style — broad selectors for Streamlit Cloud compatibility */
-input, textarea {
+ 
+/* Input dark style */
+div[data-testid="stNumberInput"] input,
+div[data-testid="stTextInput"] input {
     background-color: #1c1c1e !important;
     color: #ffffff !important;
     border: 1.5px solid #3a3a3a !important;
     border-radius: 8px !important;
 }
-input::placeholder, textarea::placeholder {
+div[data-testid="stNumberInput"] input::placeholder,
+div[data-testid="stTextInput"] input::placeholder {
     color: #888888 !important;
 }
-
-/* Selectbox — container */
-div[data-testid="stSelectbox"] > div > div,
-div[data-baseweb="select"] > div,
-div[data-baseweb="select"] > div > div {
+div[data-testid="stSelectbox"] > div > div {
     background-color: #1c1c1e !important;
     color: #ffffff !important;
     border: 1.5px solid #3a3a3a !important;
     border-radius: 8px !important;
 }
-/* Selectbox — teks nilai yang dipilih */
-div[data-baseweb="select"] span,
-div[data-baseweb="select"] div[class*="singleValue"],
-div[data-testid="stSelectbox"] span,
-div[data-testid="stSelectbox"] div[class*="placeholder"] {
-    color: #ffffff !important;
-}
-div[data-testid="stSelectbox"] svg,
-div[data-baseweb="select"] svg { fill: #ffffff !important; }
-
-/* Selectbox dropdown list */
-div[data-baseweb="popover"],
-div[data-baseweb="popover"] > div,
-ul[role="listbox"] {
-    background-color: #1c1c1e !important;
-}
-li[role="option"],
-div[data-baseweb="popover"] li {
-    background-color: #1c1c1e !important;
-    color: #ffffff !important;
-}
-li[role="option"]:hover,
-div[data-baseweb="popover"] li:hover {
-    background-color: #2e2e2e !important;
-}
-
-/* Labels — gelap, karena posisinya di atas background terang (.stApp) */
-label, .stNumberInput label, .stTextInput label, .stSelectbox label {
-    color: #1c1c1e !important;
+div[data-testid="stSelectbox"] svg { fill: #ffffff !important; }
+div[data-testid="stNumberInput"] label,
+div[data-testid="stTextInput"] label,
+div[data-testid="stSelectbox"] label {
+    color: #444444 !important;
     font-size: 0.8rem !important;
     font-weight: 600 !important;
 }
-
-/* +/- buttons */
-div[data-testid="stNumberInput"] button,
-button[data-testid="baseButton-minimal"] {
+div[data-testid="stNumberInput"] button {
     background-color: #3a3a3a !important;
     color: #ffffff !important;
     border: none !important;
 }
-
+ 
 /* Button */
 div[data-testid="stButton"] > button[kind="primary"] {
     background-color: #f5e642 !important;
@@ -128,7 +99,7 @@ div[data-testid="stButton"] > button[kind="primary"] {
     font-size: 0.95rem !important;
     padding: 0.65rem 1rem !important;
 }
-
+ 
 /* Result cards */
 .result-row { display: flex; gap: 1rem; margin-top: 1rem; }
 .result-card {
@@ -151,11 +122,11 @@ div[data-testid="stButton"] > button[kind="primary"] {
     color: #f5e642 !important;
     line-height: 1;
 }
-.result-unit { font-size: 0.75rem; color: #999999 !important; margin-top: 0.3rem; }
+.result-unit { font-size: 0.75rem; color: #666666 !important; margin-top: 0.3rem; }
 .result-good { border-top: 3px solid #4ade80; }
 .result-mid  { border-top: 3px solid #facc15; }
 .result-low  { border-top: 3px solid #f87171; }
-
+ 
 .coord-badge {
     background: #1c1c1e;
     color: #f5e642 !important;
@@ -178,13 +149,13 @@ div[data-testid="stButton"] > button[kind="primary"] {
 }
 </style>
 """, unsafe_allow_html=True)
-
-
+ 
+ 
 @st.cache_resource
 def load_model():
     with open("models/catboost_final.pkl", "rb") as f:
         return pickle.load(f)
-
+ 
 @st.cache_data
 def load_dataset():
     df = pd.read_excel("Dataset_Properti_Jaksel.xlsx")
@@ -199,7 +170,7 @@ def load_dataset():
         ROI=('ROI', 'mean'),
     ).reset_index()
     return df_bldg
-
+ 
 try:
     artifacts        = load_model()
     cb_roi           = artifacts["catboost_roi"]
@@ -214,8 +185,8 @@ except Exception as e:
     st.error(f"Gagal load model/data: {e}")
     MODEL_LOADED = False
     df_buildings = pd.DataFrame()
-
-
+ 
+ 
 def engineer_features(row):
     grade_map = {
         "Premium":"Tier_1","Prime":"Tier_1","5*":"Tier_1",
@@ -243,12 +214,11 @@ def engineer_features(row):
         "Log_Sold_Rate": np.log1p(row["Sold_Rate"]),
         "Log_Rental_Rate": np.log1p(row["Rental_Rate"]),
     }])
-
-
+ 
 def predict(row):
     X = pre_pipeline.transform(engineer_features(row))
     return float(cb_roi.predict(X)[0]), float(cb_occ.predict(X)[0])
-
+ 
 def haversine_km(lat1, lon1, lat2, lon2):
     R = 6371
     dlat = math.radians(lat2 - lat1)
@@ -256,8 +226,8 @@ def haversine_km(lat1, lon1, lat2, lon2):
     a = (math.sin(dlat/2)**2 +
          math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon/2)**2)
     return R * 2 * math.asin(math.sqrt(a))
-
-
+ 
+ 
 PROPERTY_TYPES = ["Apartment", "Hotel", "Office", "Retail"]
 LEASE_TYPES    = ["Lease", "Strata"]
 GRADES = ["Premium","Prime","5*","Upper","A","4*","Middle Up","B+","B",
@@ -276,12 +246,12 @@ MARKER_COLORS = {
     "Apartment":"#3b82f6","Hotel":"#f59e0b",
     "Office":"#10b981","Retail":"#ef4444",
 }
-
+ 
 for k, v in [("lat",-6.2297),("lng",106.8295),("roi",None),("occ",None)]:
     if k not in st.session_state:
         st.session_state[k] = v
-
-
+ 
+ 
 # HEADER
 st.markdown("""
 <div class="app-header">
@@ -289,11 +259,11 @@ st.markdown("""
   <p class="app-subtitle">Prediksi ROI &amp; Occupancy Rate · CatBoost ML Model · CV R² ROI 0.9927</p>
 </div>
 """, unsafe_allow_html=True)
-
+ 
 col_form, col_map = st.columns([1, 1.5], gap="large")
-
+ 
 # FORM
-with col_form:  
+with col_form:
     st.markdown('<div class="section-title">📍 Lokasi</div>', unsafe_allow_html=True)
     st.markdown('<p class="hint">Klik peta di kanan → Lat/Long terisi otomatis.</p>', unsafe_allow_html=True)
     c1, c2 = st.columns(2)
@@ -301,20 +271,20 @@ with col_form:
     lng_input = c2.number_input("Longitude", value=st.session_state.lng, format="%.6f", step=0.0001)
     st.session_state.lat = lat_input
     st.session_state.lng = lng_input
-
+ 
     st.markdown('<div class="section-title">🏗️ Identitas Properti</div>', unsafe_allow_html=True)
     c3, c4, c5 = st.columns(3)
     prop_type  = c3.selectbox("Property", PROPERTY_TYPES)
     lease_type = c4.selectbox("Type", LEASE_TYPES)
     grade      = c5.selectbox("Grade", GRADES)
     area       = st.selectbox("Area", AREAS)
-
+ 
     st.markdown('<div class="section-title">📊 Data Properti</div>', unsafe_allow_html=True)
     c6, c7 = st.columns(2)
     total_unit  = c6.number_input("Total Unit", min_value=1, value=100, step=1)
     sold_rate   = c7.number_input("Sold Rate (juta/m²)", min_value=0.0, value=50.0, step=0.5)
     rental_rate = st.number_input("Rental Rate (ribu/m²/bln)", min_value=0.0, value=300.0, step=10.0)
-
+ 
     st.markdown('<div class="section-title">🛣️ Aksesibilitas</div>', unsafe_allow_html=True)
     c8, c9 = st.columns([2.5, 1])
     c8.text_input("Nama Jalan Utama (opsional)", placeholder="e.g. Jl. Sudirman")
@@ -327,10 +297,10 @@ with col_form:
     lrt     = tc4.number_input("LRT", min_value=0, max_value=10, value=0, step=1)
     krl     = tc5.number_input("KRL", min_value=0, max_value=10, value=0, step=1)
     am_public = sum([gen_bus>0, tj>0, mrt>0, lrt>0, krl>0])
-
+ 
     st.markdown("")
     predict_btn = st.button("🔍 Prediksi ROI & Occupancy", type="primary", use_container_width=True)
-
+ 
     if predict_btn and MODEL_LOADED:
         input_row = {
             "Property":prop_type,"Type":lease_type,"Area":area,"Grade":grade,
@@ -345,7 +315,7 @@ with col_form:
             roi, occ = predict(input_row)
         st.session_state.roi = roi
         st.session_state.occ = occ
-
+ 
     if st.session_state.roi is not None:
         rv, ov = st.session_state.roi, st.session_state.occ
         rc = "result-good" if rv >= 0.08 else ("result-mid" if rv >= 0.05 else "result-low")
@@ -365,16 +335,24 @@ with col_form:
         </div>
         """, unsafe_allow_html=True)
 
+
 # PETA
+CARTO_API_KEY = "cb1_44ol_1_da9929c040f1b6247f4eba18"
+CARTO_KEY = st.secrets["CARTO_API_KEY"]
+
 with col_map:
     st.markdown('<div class="map-title">🗺️ Klik peta untuk menentukan lokasi</div>', unsafe_allow_html=True)
     st.markdown(
         f'<p class="hint">Marker berwarna = {prop_type} dalam radius 3 km · Klik marker untuk detail properti</p>',
         unsafe_allow_html=True)
-
+ 
     m = folium.Map(location=[st.session_state.lat, st.session_state.lng],
-                   zoom_start=13, tiles="CartoDB positron")
-
+                   zoom_start=13,
+                   tiles=f"https://{{s}}.basemaps.cartocdn.com/rastertiles/light_all/{{z}}/{{x}}/{{y}}.png?key={CARTO_KEY}",
+                   attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attribution/">CARTO</a>',
+                   subdomains="abcd",
+                   max_zoom=20)
+ 
     # Radius circle
     folium.Circle(
         location=[st.session_state.lat, st.session_state.lng],
@@ -382,7 +360,7 @@ with col_map:
         fill=True, fill_color="#f5e642", fill_opacity=0.06,
         tooltip="Radius 3 km",
     ).add_to(m)
-
+ 
     # Marker lokasi pilihan
     folium.Marker(
         location=[st.session_state.lat, st.session_state.lng],
@@ -390,7 +368,7 @@ with col_map:
         icon=folium.Icon(color="red", icon="home", prefix="fa"),
         tooltip="📍 Lokasi pilihan",
     ).add_to(m)
-
+ 
     # Properti dalam radius
     if MODEL_LOADED and not df_buildings.empty:
         df_f = df_buildings[df_buildings["Property"] == prop_type].copy()
@@ -398,7 +376,7 @@ with col_map:
             lambda r: haversine_km(st.session_state.lat, st.session_state.lng, r["Lat"], r["Long"]), axis=1)
         df_r = df_f[df_f["dist_km"] <= 3.0]
         mc   = MARKER_COLORS.get(prop_type, "#6366f1")
-
+ 
         for _, row in df_r.iterrows():
             sold_s   = f"Rp {row['Sold_Rate']/1e6:.1f} jt/m²"   if row['Sold_Rate'] > 0   else "N/A"
             rent_s   = f"Rp {row['Rental_Rate']/1e3:.0f} rb/m²"  if row['Rental_Rate'] > 0 else "N/A"
@@ -422,7 +400,7 @@ with col_map:
                 tooltip=f"🏢 {row['Building_Name']}",
                 popup=folium.Popup(popup_html, max_width=260),
             ).add_to(m)
-
+ 
         # Mini legend
         legend = f"""
         <div style="position:fixed;bottom:30px;left:30px;z-index:1000;
@@ -432,9 +410,9 @@ with col_map:
           <span style="color:{mc};">●</span> {len(df_r)} properti ditemukan
         </div>"""
         m.get_root().html.add_child(folium.Element(legend))
-
+ 
     map_data = st_folium(m, width="100%", height=560, returned_objects=["last_clicked"])
-
+ 
     if map_data and map_data.get("last_clicked"):
         clat = map_data["last_clicked"]["lat"]
         clng = map_data["last_clicked"]["lng"]
@@ -442,15 +420,15 @@ with col_map:
             st.session_state.lat = clat
             st.session_state.lng = clng
             st.rerun()
-
+ 
     st.markdown(
         f'<div class="coord-badge">📍 {st.session_state.lat:.5f}, {st.session_state.lng:.5f}</div>',
         unsafe_allow_html=True)
-
+ 
     st.markdown("**Legend warna marker:**")
     lc = st.columns(4)
     for i, (pt, pc) in enumerate(MARKER_COLORS.items()):
         lc[i].markdown(f'<span style="color:{pc};font-size:1.1rem;">●</span> {pt}', unsafe_allow_html=True)
-
+ 
 st.divider()
 st.caption("Model: CatBoost (tuned) · Dataset: Properti Jakarta Selatan · CV R² ROI: 0.9927 · Occ: 0.6632")
