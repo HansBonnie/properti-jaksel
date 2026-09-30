@@ -76,6 +76,13 @@ div[data-testid="stSelectbox"] > div > div {
     border-radius: 8px !important;
 }
 div[data-testid="stSelectbox"] svg { fill: #ffffff !important; }
+/* Teks nilai terpilih di dalam selectbox */
+div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] input {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 1 !important;
+}
 div[data-testid="stNumberInput"] label,
 div[data-testid="stTextInput"] label,
 div[data-testid="stSelectbox"] label {
